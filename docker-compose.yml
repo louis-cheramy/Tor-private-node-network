@@ -1,0 +1,63 @@
+services:
+  onion-web:
+    build:
+      context: .
+      dockerfile: tor/onion/Dockerfile
+    container_name: onion-web
+    networks:
+      - tor_net
+    volumes:
+      - onion_hidden_service:/var/lib/tor/hidden_service
+    restart: unless-stopped
+
+  tor-client:
+    build:
+      context: .
+      dockerfile: tor/client/Dockerfile
+    container_name: tor-client
+    depends_on:
+      - onion-web
+    networks:
+      - tor_net
+    volumes:
+      - onion_hidden_service:/shared/onion:ro
+
+  relay1:
+    build:
+      context: .
+      dockerfile: tor/relay/Dockerfile
+    container_name: relay1
+    environment:
+      - RELAY_NICKNAME=DemoRelay01
+    networks:
+      - tor_net
+    restart: unless-stopped
+
+  relay2:
+    build:
+      context: .
+      dockerfile: tor/relay/Dockerfile
+    container_name: relay2
+    environment:
+      - RELAY_NICKNAME=DemoRelay02
+    networks:
+      - tor_net
+    restart: unless-stopped
+
+  relay3:
+    build:
+      context: .
+      dockerfile: tor/relay/Dockerfile
+    container_name: relay3
+    environment:
+      - RELAY_NICKNAME=DemoRelay03
+    networks:
+      - tor_net
+    restart: unless-stopped
+
+networks:
+  tor_net:
+    driver: bridge
+
+volumes:
+  onion_hidden_service:

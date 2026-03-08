@@ -1,0 +1,11 @@
+DataDirectory /var/lib/tor
+Log notice stdout
+RunAsDaemon 0
+
+# Demo relay container
+Nickname ${RELAY_NICKNAME}
+ContactInfo demo-local-relay@invalid
+SocksPort 0
+ORPort 9001
+ExitRelay 0
+AssumeReachable 1
