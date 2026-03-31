@@ -1,13 +1,61 @@
 services:
+  dirauth:
+    build:
+      context: .
+      dockerfile: tor/dirauth/Dockerfile
+    container_name: dirauth
+    environment:
+      - DIRAUTH_NICKNAME=LocalDirAuth1
+      - DIRAUTH_IP=172.28.0.10
+      - DIRAUTH_ORPORT=7001
+      - DIRAUTH_DIRPORT=7000
+      - PEER_IP=172.28.0.11
+      - PEER_ORPORT=7001
+      - PEER_DIRPORT=7000
+    networks:
+      tor_net:
+        ipv4_address: 172.28.0.10
+    volumes:
+      - tor_authority_data:/var/lib/tor
+      - tor_authority_data2:/peer_authority:ro
+    restart: unless-stopped
+
+  dirauth2:
+    build:
+      context: .
+      dockerfile: tor/dirauth/Dockerfile
+    container_name: dirauth2
+    environment:
+      - DIRAUTH_NICKNAME=LocalDirAuth2
+      - DIRAUTH_IP=172.28.0.11
+      - DIRAUTH_ORPORT=7001
+      - DIRAUTH_DIRPORT=7000
+      - PEER_IP=172.28.0.10
+      - PEER_ORPORT=7001
+      - PEER_DIRPORT=7000
+    networks:
+      tor_net:
+        ipv4_address: 172.28.0.11
+    volumes:
+      - tor_authority_data2:/var/lib/tor
+      - tor_authority_data:/peer_authority:ro
+    restart: unless-stopped
+
   onion-web:
     build:
       context: .
       dockerfile: tor/onion/Dockerfile
     container_name: onion-web
+    depends_on:
+      - dirauth
+      - dirauth2
     networks:
-      - tor_net
+      tor_net:
+        ipv4_address: 172.28.0.5
     volumes:
       - onion_hidden_service:/var/lib/tor/hidden_service
+      - tor_authority_data:/shared/authority1:ro
+      - tor_authority_data2:/shared/authority2:ro
     restart: unless-stopped
 
   tor-client:
@@ -16,48 +64,89 @@ services:
       dockerfile: tor/client/Dockerfile
     container_name: tor-client
     depends_on:
+      - dirauth
+      - dirauth2
+      - relay1
+      - relay2
+      - relay3
       - onion-web
     networks:
-      - tor_net
+      tor_net:
+        ipv4_address: 172.28.0.6
     volumes:
       - onion_hidden_service:/shared/onion:ro
+      - tor_authority_data:/shared/authority1:ro
+      - tor_authority_data2:/shared/authority2:ro
+    ports:
+      - "127.0.0.1:38080:3000"
+    restart: unless-stopped
 
   relay1:
+    depends_on:
+      - dirauth
+      - dirauth2
     build:
       context: .
       dockerfile: tor/relay/Dockerfile
     container_name: relay1
     environment:
       - RELAY_NICKNAME=DemoRelay01
+      - RELAY_ADDRESS=172.28.0.2
     networks:
-      - tor_net
+      tor_net:
+        ipv4_address: 172.28.0.2
+    volumes:
+      - tor_authority_data:/shared/authority1:ro
+      - tor_authority_data2:/shared/authority2:ro
     restart: unless-stopped
 
   relay2:
+    depends_on:
+      - dirauth
+      - dirauth2
     build:
       context: .
       dockerfile: tor/relay/Dockerfile
     container_name: relay2
     environment:
       - RELAY_NICKNAME=DemoRelay02
+      - RELAY_ADDRESS=172.28.0.3
     networks:
-      - tor_net
+      tor_net:
+        ipv4_address: 172.28.0.3
+    volumes:
+      - tor_authority_data:/shared/authority1:ro
+      - tor_authority_data2:/shared/authority2:ro
     restart: unless-stopped
 
   relay3:
+    depends_on:
+      - dirauth
+      - dirauth2
     build:
       context: .
       dockerfile: tor/relay/Dockerfile
     container_name: relay3
     environment:
       - RELAY_NICKNAME=DemoRelay03
+      - RELAY_ADDRESS=172.28.0.4
     networks:
-      - tor_net
+      tor_net:
+        ipv4_address: 172.28.0.4
+    volumes:
+      - tor_authority_data:/shared/authority1:ro
+      - tor_authority_data2:/shared/authority2:ro
     restart: unless-stopped
 
 networks:
   tor_net:
     driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
 
 volumes:
   onion_hidden_service:
+  tor_authority_data:
+  tor_authority_data2:

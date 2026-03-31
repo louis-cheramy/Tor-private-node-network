@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tor Client Dashboard</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0b1020;
+        color: #e5e7eb;
+      }
+      header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #1f2937;
+        background: #111827;
+      }
+      h1 {
+        margin: 0;
+        color: #a78bfa;
+        font-size: 24px;
+      }
+      .sub {
+        margin-top: 6px;
+        color: #9ca3af;
+        font-size: 14px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 16px;
+        padding: 16px;
+      }
+      .panel {
+        border: 1px solid #1f2937;
+        border-radius: 10px;
+        background: #111827;
+        padding: 14px;
+      }
+      .nodes {
+        display: grid;
+        gap: 10px;
+      }
+      .node {
+        border: 1px solid #374151;
+        border-radius: 8px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .node.active {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 1px #8b5cf6 inset;
+      }
+      .label {
+        color: #9ca3af;
+        font-size: 12px;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .btn {
+        border: 0;
+        background: #7c3aed;
+        color: white;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn:disabled {
+        background: #374151;
+        color: #9ca3af;
+        cursor: not-allowed;
+      }
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: Consolas, monospace;
+        font-size: 12px;
+      }
+      .logs {
+        max-height: 420px;
+        overflow: auto;
+        background: #030712;
+        border: 1px solid #1f2937;
+        border-radius: 8px;
+        padding: 10px;
+      }
+      .status {
+        font-size: 13px;
+        color: #93c5fd;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Infrastructure Docker Tor</h1>
+      <div class="sub">Dashboard du client Tor sur localhost avec requetes .onion reelles</div>
+    </header>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="row">
+          <h3 style="margin: 0">Topologie</h3>
+          <button id="simulateBtn" class="btn">Envoyer une requete reelle</button>
+        </div>
+        <div id="onionInfo" class="status"></div>
+        <div id="requestStatus" class="status"></div>
+        <div id="nodes" class="nodes" style="margin-top: 10px"></div>
+      </section>
+
+      <section class="panel">
+        <h3 id="logsTitle" style="margin: 0 0 10px 0">Logs</h3>
+        <div class="logs">
+          <pre id="logsBox">Selectionnez un noeud.</pre>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const state = {
+        nodes: [],
+        logs: {},
+        selectedNodeId: null,
+        simulating: false,
+      };
+
+      async function getJson(url, options) {
+        const res = await fetch(url, options);
+        const data = await res.json();
+        if (!res.ok || data.ok === false) {
+          throw new Error(data.error || `Request failed: ${res.status}`);
+        }
+        return data;
+      }
+
+      function renderNodes() {
+        const root = document.getElementById("nodes");
+        root.innerHTML = "";
+
+        state.nodes.forEach((node) => {
+          const el = document.createElement("div");
+          el.className = "node" + (state.selectedNodeId === node.id ? " active" : "");
+          el.innerHTML = `
+            <div class="row"><strong>${node.name}</strong><span>${node.status}</span></div>
+            <div class="label">Type: ${node.type}</div>
+            <div class="label">Host: ${node.ip}</div>
+            <div class="label">Connexions: ${node.connections.join(", ") || "Aucune"}</div>
+            ${node.onionAddress ? `<div class="label">.onion: ${node.onionAddress}</div>` : ""}
+          `;
+          el.onclick = () => {
+            state.selectedNodeId = node.id;
+            renderNodes();
+            renderLogs();
+          };
+          root.appendChild(el);
+        });
+      }
+
+      function renderLogs() {
+        const title = document.getElementById("logsTitle");
+        const box = document.getElementById("logsBox");
+        const id = state.selectedNodeId;
+        if (!id) {
+          title.textContent = "Logs";
+          box.textContent = "Selectionnez un noeud.";
+          return;
+        }
+        const node = state.nodes.find((n) => n.id === id);
+        title.textContent = `Logs - ${node ? node.name : id}`;
+        const entries = state.logs[id] || [];
+        box.textContent = entries.length ? entries.join("\n") : "Aucun log.";
+        box.scrollTop = box.scrollHeight;
+      }
+
+      function setRequestStatus(message) {
+        document.getElementById("requestStatus").textContent = message;
+      }
+
+      function setButtonState() {
+        const btn = document.getElementById("simulateBtn");
+        btn.disabled = state.simulating;
+        btn.textContent = state.simulating
+          ? "Requete en cours..."
+          : "Envoyer une requete reelle";
+      }
+
+      async function refreshState() {
+        const data = await getJson("/api/state");
+        state.nodes = data.nodes;
+        document.getElementById("onionInfo").textContent = data.onionAddress
+          ? `Onion detecte: ${data.onionAddress} | SOCKS: ${data.socksProxy}`
+          : "Adresse onion non disponible pour le moment...";
+      }
+
+      async function refreshLogs() {
+        const data = await getJson("/api/logs");
+        state.logs = data.logs;
+      }
+
+      async function runRequest() {
+        if (state.simulating) return;
+        state.simulating = true;
+        setButtonState();
+        setRequestStatus("Execution d'une requete via le proxy Tor...");
+        try {
+          const data = await getJson("/api/request", { method: "POST" });
+          setRequestStatus(
+            `OK: ${data.statusLine} en ${data.elapsedMs}ms | URL: ${data.url}`
+          );
+          if (data.responsePreview) {
+            setRequestStatus(
+              `OK: ${data.statusLine} en ${data.elapsedMs}ms | Apercu: ${data.responsePreview}`
+            );
+          }
+        } catch (err) {
+          setRequestStatus(`Erreur: ${err.message}`);
+        } finally {
+          state.simulating = false;
+          setButtonState();
+          await refreshLogs();
+          renderLogs();
+        }
+      }
+
+      async function tick() {
+        try {
+          await Promise.all([refreshState(), refreshLogs()]);
+          if (!state.selectedNodeId && state.nodes.length) {
+            state.selectedNodeId = state.nodes[0].id;
+          }
+          renderNodes();
+          renderLogs();
+        } catch (err) {
+          setRequestStatus(`Erreur de chargement: ${err.message}`);
+        }
+      }
+
+      document.getElementById("simulateBtn").onclick = runRequest;
+      setButtonState();
+      tick();
+      setInterval(tick, 3000);
+    </script>
+  </body>
+</html>

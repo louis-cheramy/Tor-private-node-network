@@ -1,7 +1,9 @@
 FROM debian:bookworm-slim
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends tor gettext-base ca-certificates dos2unix \
+RUN echo "deb http://deb.debian.org/debian bookworm-backports main" > /etc/apt/sources.list.d/bookworm-backports.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends -t bookworm-backports tor \
+    && apt-get install -y --no-install-recommends gettext-base ca-certificates dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 COPY tor/relay/torrc.template /etc/tor/torrc.template

@@ -1,11 +1,17 @@
 DataDirectory /var/lib/tor
 Log notice stdout
 RunAsDaemon 0
+TestingTorNetwork 1
 
 # Demo relay container
 Nickname ${RELAY_NICKNAME}
 ContactInfo demo-local-relay@invalid
+Address ${RELAY_ADDRESS}
+DirAuthority auth1 orport=7001 no-v2 v3ident=${DIRAUTH1_V3IDENT} 172.28.0.10:7000 ${DIRAUTH1_IDENTITY}
+DirAuthority auth2 orport=7001 no-v2 v3ident=${DIRAUTH2_V3IDENT} 172.28.0.11:7000 ${DIRAUTH2_IDENTITY}
 SocksPort 0
 ORPort 9001
 ExitRelay 0
+ExitPolicy reject *:*
 AssumeReachable 1
+EnforceDistinctSubnets 0

@@ -1,0 +1,15 @@
+DataDirectory /var/lib/tor
+Log notice stdout
+RunAsDaemon 0
+Nickname LocalDirAuth
+ContactInfo local-dirauth@invalid
+Address 172.28.0.10
+SocksPort 0
+ORPort 7001
+DirPort 7000
+
+AuthoritativeDirectory 1
+V3AuthoritativeDirectory 1
+
+AssumeReachable 1
+ExitPolicy reject *:*
