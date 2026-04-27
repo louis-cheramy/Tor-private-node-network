@@ -9,18 +9,14 @@ DataDirectory /var/lib/tor
 RunAsDaemon 0
 Log notice stdout
 
-# Relay identity
-Nickname ${RELAY_NICKNAME}
-Address ${RELAY_ADDRESS}
-ContactInfo ${RELAY_NICKNAME}@local.invalid
+# Client settings
+ClientOnly 1
+VanguardsLiteEnabled 0
 
-# Network settings
-SocksPort 0
-ORPort 9001 IPv4Only
-
-# Disable exit traffic
-ExitRelay 0
-ExitPolicy reject *:*
+# Listen on all interfaces so the container and host can access Tor
+SocksPort 0.0.0.0:9050
+ControlPort 127.0.0.1:9051
+CookieAuthentication 1
 
 # Directory authorities
 DirAuthority auth1 orport=7001 no-v2 v3ident=${DIRAUTH1_V3IDENT} 172.28.0.10:7000 ${DIRAUTH1_IDENTITY}

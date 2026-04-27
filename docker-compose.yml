@@ -69,6 +69,8 @@ services:
       - relay1
       - relay2
       - relay3
+      - relay4
+      - relay5
       - onion-web
     networks:
       tor_net:
@@ -79,6 +81,7 @@ services:
       - tor_authority_data2:/shared/authority2:ro
     ports:
       - "127.0.0.1:38080:3000"
+      - "127.0.0.1:9050:9050"
     restart: unless-stopped
 
   relay1:
@@ -138,10 +141,47 @@ services:
       - tor_authority_data2:/shared/authority2:ro
     restart: unless-stopped
 
+  relay4:
+    depends_on:
+      - dirauth
+      - dirauth2
+    build:
+      context: .
+      dockerfile: tor/relay/Dockerfile
+    container_name: relay4
+    environment:
+      - RELAY_NICKNAME=DemoRelay04
+      - RELAY_ADDRESS=172.28.0.7
+    networks:
+      tor_net:
+        ipv4_address: 172.28.0.7
+    volumes:
+      - tor_authority_data:/shared/authority1:ro
+      - tor_authority_data2:/shared/authority2:ro
+    restart: unless-stopped
+    
+  relay5:
+    depends_on:
+      - dirauth
+      - dirauth2
+    build:
+      context: .
+      dockerfile: tor/relay/Dockerfile
+    container_name: relay5
+    environment:
+      - RELAY_NICKNAME=DemoRelay05
+      - RELAY_ADDRESS=172.28.0.8
+    networks:
+      tor_net:
+        ipv4_address: 172.28.0.8
+    volumes:
+      - tor_authority_data:/shared/authority1:ro
+      - tor_authority_data2:/shared/authority2:ro
+    restart: unless-stopped
+
 networks:
   tor_net:
     driver: bridge
-    internal: true
     ipam:
       config:
         - subnet: 172.28.0.0/16
