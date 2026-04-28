@@ -80,7 +80,6 @@ services:
       - tor_authority_data:/shared/authority1:ro
       - tor_authority_data2:/shared/authority2:ro
     ports:
-      - "127.0.0.1:38080:3000"
       - "127.0.0.1:9050:9050"
     restart: unless-stopped
 
@@ -177,6 +176,19 @@ services:
     volumes:
       - tor_authority_data:/shared/authority1:ro
       - tor_authority_data2:/shared/authority2:ro
+    restart: unless-stopped
+    
+  dashboard:
+    build:
+      context: ./dashboard
+    container_name: tor-dashboard
+    depends_on:
+      - tor-client
+      - onion-web
+    networks:
+      - tor_net
+    ports:
+      - "127.0.0.1:38080:3000"
     restart: unless-stopped
 
 networks:

@@ -7,8 +7,6 @@ RUN echo "deb http://deb.debian.org/debian bookworm-backports main" > /etc/apt/s
     && rm -rf /var/lib/apt/lists/*
 
 COPY tor/client/torrc.template /etc/tor/torrc.template
-COPY tor/client/dashboard_api.py /dashboard_api.py
-COPY tor/client/dashboard.html /dashboard.html
 COPY tor/client/entrypoint.sh /entrypoint.sh
 
 RUN dos2unix /entrypoint.sh && chmod +x /entrypoint.sh

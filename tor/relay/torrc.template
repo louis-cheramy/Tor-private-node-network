@@ -25,3 +25,7 @@ ExitPolicy reject *:*
 # Directory authorities
 DirAuthority auth1 orport=7001 no-v2 v3ident=${DIRAUTH1_V3IDENT} 172.28.0.10:7000 ${DIRAUTH1_IDENTITY}
 DirAuthority auth2 orport=7001 no-v2 v3ident=${DIRAUTH2_V3IDENT} 172.28.0.11:7000 ${DIRAUTH2_IDENTITY}
+
+# For web dashboard
+ControlPort 0.0.0.0:9051
+HashedControlPassword 16:872860B76453A77D60CA2BB8C1A7042072093276A3D701AD684053EC4C

@@ -24,13 +24,9 @@ export DIRAUTH2_IDENTITY=$(awk '{print $2}' /shared/authority2/fingerprint)
 # Render torrc from the template
 envsubst < /etc/tor/torrc.template > /etc/tor/torrc
 
-# Start Tor in the background
+# Start Tor in the foreground
 echo "[tor-client] Starting the Tor daemon..."
-su -s /bin/sh -c "tor -f /etc/tor/torrc" debian-tor &
+exec su -s /bin/sh -c "tor -f /etc/tor/torrc" debian-tor
 TOR_PID=$!
 
 echo "[tor-client] Tor is running (PID: $TOR_PID)"
-
-# Start the dashboard API in the foreground
-echo "[tor-client] Starting the dashboard API on port 3000..."
-exec python3 /dashboard_api.py

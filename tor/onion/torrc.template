@@ -22,3 +22,7 @@ HiddenServicePort 80 127.0.0.1:8080
 # Directory authorities
 DirAuthority auth1 orport=7001 no-v2 v3ident=${DIRAUTH1_V3IDENT} 172.28.0.10:7000 ${DIRAUTH1_IDENTITY}
 DirAuthority auth2 orport=7001 no-v2 v3ident=${DIRAUTH2_V3IDENT} 172.28.0.11:7000 ${DIRAUTH2_IDENTITY}
+
+# For web dashboard
+ControlPort 0.0.0.0:9051
+HashedControlPassword 16:D2C74B43ECB64A2D60B4EBEE2C37C9DE0653CAE164B0B4A2F7D8353AE9
