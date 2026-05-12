@@ -1,0 +1,29 @@
+# Test network mode
+TestingTorNetwork 1
+AssumeReachable 1
+AddressDisableIPv6 1
+EnforceDistinctSubnets 0
+
+# Vote flags
+TestingDirAuthVoteGuard *
+TestingDirAuthVoteHSDir *
+TestingDirAuthVoteExit *
+
+# Base settings
+DataDirectory /var/lib/tor
+RunAsDaemon 0
+Log notice stdout
+SocksPort 0
+ExitPolicy reject *:*
+
+# Directory authority settings
+AuthoritativeDirectory 1
+V3AuthoritativeDirectory 1
+
+# Short delays for a quick demo
+V3AuthVotingInterval 60
+V3AuthVoteDelay 10
+V3AuthDistDelay 10
+TestingV3AuthInitialVotingInterval 20
+TestingV3AuthInitialVoteDelay 5
+TestingV3AuthInitialDistDelay 5

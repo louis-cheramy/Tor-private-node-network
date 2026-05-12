@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tor Network Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px; }
+        .panel { background: #1e293b; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .circuit { background: #334155; margin: 10px 0; padding: 15px; border-radius: 6px; border-left: 4px solid #8b5cf6; }
+        .hop { display: inline-block; background: #475569; padding: 5px 10px; border-radius: 4px; margin-right: 5px; }
+        .purpose { color: #94a3b8; font-size: 0.9em; margin-bottom: 8px; display: block; }
+        button { background: #8b5cf6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #7c3aed; }
+    </style>
+</head>
+<body>
+    <h1>Visualiseur de Circuits Tor</h1>
+    <button onclick="fetchCircuits()">Rafraîchir les circuits en direct</button>
+
+    <div class="panel" id="client-panel">
+        <h2>Circuits du Client (tor-client)</h2>
+        <div id="client-circuits">Cliquez sur Rafraîchir...</div>
+    </div>
+
+    <div class="panel" id="onion-panel">
+        <h2>Circuits du Serveur (onion-web)</h2>
+        <div id="onion-circuits">Cliquez sur Rafraîchir...</div>
+    </div>
+
+    <script>
+        function formatCircuits(circuits) {
+            if (!circuits || circuits.length === 0) return "<p>Aucun circuit ouvert.</p>";
+            if (circuits[0].error) return '<p style="color: #ef4444;">Erreur : ' + circuits[0].error + '</p>';
+            
+            return circuits.map(c => `
+                <div class="circuit">
+                    <span class="purpose">ID: ${c.id} | Statut: ${c.status} | Rôle: ${c.purpose}</span>
+                    <div>${c.path.map((hop, index) => `<span class="hop">${index + 1}. ${hop || 'Unknown'}</span>`).join(' ➔ ')}</div>
+                </div>
+            `).join('');
+        }
+
+        async function fetchCircuits() {
+            document.getElementById('client-circuits').innerHTML = "Chargement...";
+            document.getElementById('onion-circuits').innerHTML = "Chargement...";
+            
+            try {
+                const response = await fetch('/api/circuits');
+                const data = await response.json();
+                
+                document.getElementById('client-circuits').innerHTML = formatCircuits(data.client);
+                document.getElementById('onion-circuits').innerHTML = formatCircuits(data.onion);
+            } catch (err) {
+                alert("Erreur de connexion à l'API Flask !");
+            }
+        }
+    </script>
+</body>
+</html>

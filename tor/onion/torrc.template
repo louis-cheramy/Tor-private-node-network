@@ -9,18 +9,15 @@ DataDirectory /var/lib/tor
 RunAsDaemon 0
 Log notice stdout
 
-# Relay identity
-Nickname ${RELAY_NICKNAME}
-Address ${RELAY_ADDRESS}
-ContactInfo ${RELAY_NICKNAME}@local.invalid
-
-# Network settings
+# Node settings
 SocksPort 0
-ORPort 9001 IPv4Only
+ClientOnly 1
+VanguardsLiteEnabled 0
 
-# Disable exit traffic
-ExitRelay 0
-ExitPolicy reject *:*
+# Hidden service settings
+HiddenServiceDir /var/lib/tor/hidden_service
+HiddenServiceVersion 3
+HiddenServicePort 80 127.0.0.1:8080
 
 # Directory authorities
 DirAuthority auth1 orport=7001 no-v2 v3ident=${DIRAUTH1_V3IDENT} 172.28.0.10:7000 ${DIRAUTH1_IDENTITY}
@@ -28,4 +25,4 @@ DirAuthority auth2 orport=7001 no-v2 v3ident=${DIRAUTH2_V3IDENT} 172.28.0.11:700
 
 # For web dashboard
 ControlPort 0.0.0.0:9051
-HashedControlPassword 16:872860B76453A77D60CA2BB8C1A7042072093276A3D701AD684053EC4C
+HashedControlPassword 16:D2C74B43ECB64A2D60B4EBEE2C37C9DE0653CAE164B0B4A2F7D8353AE9

@@ -1,37 +1,32 @@
 #!/bin/sh
 set -eu
 
+echo "[tor-client] Initializing the Tor client..."
+
+# Secure the data directory
 mkdir -p /var/lib/tor
 chmod 700 /var/lib/tor
 chown -R debian-tor:debian-tor /var/lib/tor
 
-su -s /bin/sh -c "tor -f /etc/tor/torrc" debian-tor &
+# Wait for the authorities' certificates
+echo "[tor-client] Waiting for authority certificates..."
+while [ ! -f "/shared/authority1/fingerprint" ] || [ ! -f "/shared/authority2/fingerprint" ]; do
+  sleep 1
+done
+
+# Extract fingerprints
+export DIRAUTH1_V3IDENT=$(awk '/^fingerprint / {print $2}' /shared/authority1/keys/authority_certificate)
+export DIRAUTH1_IDENTITY=$(awk '{print $2}' /shared/authority1/fingerprint)
+
+export DIRAUTH2_V3IDENT=$(awk '/^fingerprint / {print $2}' /shared/authority2/keys/authority_certificate)
+export DIRAUTH2_IDENTITY=$(awk '{print $2}' /shared/authority2/fingerprint)
+
+# Render torrc from the template
+envsubst < /etc/tor/torrc.template > /etc/tor/torrc
+
+# Start Tor in the foreground
+echo "[tor-client] Starting the Tor daemon..."
+exec su -s /bin/sh -c "tor -f /etc/tor/torrc" debian-tor
 TOR_PID=$!
 
-echo "[tor-client] Waiting for tor bootstrap..."
-sleep 20
-
-HOSTNAME_FILE="/shared/onion/hostname"
-if [ ! -f "$HOSTNAME_FILE" ]; then
-  echo "[tor-client] Onion hostname not ready yet. Start test manually later."
-  wait "$TOR_PID"
-  exit 0
-fi
-
-ONION_ADDR="$(tr -d '\r\n' < "$HOSTNAME_FILE")"
-echo "[tor-client] Onion service detected: $ONION_ADDR"
-echo "[tor-client] Testing request through Tor SOCKS proxy..."
-
-set +e
-curl --socks5-hostname 127.0.0.1:9050 "http://$ONION_ADDR" --max-time 30
-RESULT=$?
-set -e
-
-if [ "$RESULT" -ne 0 ]; then
-  echo "[tor-client] Request failed (maybe tor still bootstrapping)."
-else
-  echo
-  echo "[tor-client] Request succeeded."
-fi
-
-wait "$TOR_PID"
+echo "[tor-client] Tor is running (PID: $TOR_PID)"
