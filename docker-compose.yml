@@ -187,6 +187,8 @@ services:
       - onion-web
     networks:
       - tor_net
+    volumes:
+      - onion_hidden_service:/shared/onion:ro
     ports:
       - "127.0.0.1:38080:3000"
     restart: unless-stopped
