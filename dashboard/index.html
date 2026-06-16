@@ -6,16 +6,63 @@
     <style>
         body { font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px; }
         .panel { background: #1e293b; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-        .circuit { background: #334155; margin: 10px 0; padding: 15px; border-radius: 6px; border-left: 4px solid #8b5cf6; }
+        .circuit { background: #334155; margin: 10px 0; padding: 15px; border-radius: 6px; border-left: 4px solid #475569; }
+        .circuit.active { border-left-color: #22c55e; background: #14352a; box-shadow: 0 0 0 1px #22c55e44; }
         .hop { display: inline-block; background: #475569; padding: 5px 10px; border-radius: 4px; margin-right: 5px; }
+        .circuit.active .hop { background: #166534; }
         .purpose { color: #94a3b8; font-size: 0.9em; margin-bottom: 8px; display: block; }
-        button { background: #8b5cf6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .badge { display: inline-block; font-size: 0.75em; font-weight: bold; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
+        .badge.used { background: #22c55e; color: #052e16; }
+        .badge.proposed { background: #475569; color: #e2e8f0; }
+        .badge.rend { background: #8b5cf6; color: #ffffff; }
+        .streams { margin-top: 8px; font-size: 0.8em; color: #86efac; }
+        button { background: #8b5cf6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-right: 10px; }
         button:hover { background: #7c3aed; }
+        button.test { background: #22c55e; }
+        button.test:hover { background: #16a34a; }
+        .onion-box { background: #1e293b; border-radius: 8px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #8b5cf6; }
+        .onion-url { font-family: monospace; font-size: 1.1em; color: #c4b5fd; word-break: break-all; }
+        .legend { font-size: 0.85em; color: #94a3b8; margin: 10px 0 20px; }
+        .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 12px; vertical-align: middle; }
+        .dot.green { background: #22c55e; }
+        .dot.grey { background: #475569; }
+        #test-result { margin-top: 10px; font-size: 0.9em; }
+        .full-route { background: #14352a; border: 1px solid #22c55e55; border-radius: 6px; padding: 15px; margin: 10px 0; }
+        .full-route.incomplete { background: #3a2a14; border-color: #f59e0b55; }
+        .route-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 8px; }
+        .node { padding: 5px 10px; border-radius: 4px; font-size: 0.9em; }
+        .node.endpoint { background: #8b5cf6; color: #fff; font-weight: bold; }
+        .node.relay { background: #166534; }
+        .node.rdv { background: #22c55e; color: #052e16; font-weight: bold; }
+        .arrow { color: #94a3b8; }
+        .route-meta { font-size: 0.8em; color: #94a3b8; }
     </style>
 </head>
 <body>
     <h1>Visualiseur de Circuits Tor</h1>
+
+    <div class="onion-box">
+        <h2 style="margin-top:0;">Service caché (.onion)</h2>
+        <div class="onion-url" id="onion-url">Chargement de l'adresse...</div>
+    </div>
+
     <button onclick="fetchCircuits()">Rafraîchir les circuits en direct</button>
+    <button class="test" onclick="testOnion()">Tester la connexion onion</button>
+    <div id="test-result"></div>
+
+    <p class="legend">
+        <span class="dot green"></span> Route utilisée (transporte du trafic / rendez-vous du service caché)
+        <span class="dot grey"></span> Route proposée (circuit disponible mais inactif)
+    </p>
+
+    <div class="panel" id="full-route-panel">
+        <h2>Trajet complet reconstitué (client ➔ service .onion)</h2>
+        <p class="route-meta">
+            Chaque trajet recolle le circuit du client et celui du service qui se rejoignent
+            sur le même point de rendez-vous (relais en clair ci-dessous).
+        </p>
+        <div id="full-routes">Cliquez sur Rafraîchir...</div>
+    </div>
 
     <div class="panel" id="client-panel">
         <h2>Circuits du Client (tor-client)</h2>
@@ -31,29 +78,129 @@
         function formatCircuits(circuits) {
             if (!circuits || circuits.length === 0) return "<p>Aucun circuit ouvert.</p>";
             if (circuits[0].error) return '<p style="color: #ef4444;">Erreur : ' + circuits[0].error + '</p>';
-            
-            return circuits.map(c => `
-                <div class="circuit">
-                    <span class="purpose">ID: ${c.id} | Statut: ${c.status} | Rôle: ${c.purpose}</span>
+
+            // On affiche d'abord les circuits utilises pour les mettre en avant.
+            const sorted = circuits.slice().sort((a, b) => (b.active === true) - (a.active === true));
+
+            return sorted.map(c => {
+                const usedBadge = c.active
+                    ? '<span class="badge used">UTILISÉE</span>'
+                    : '<span class="badge proposed">proposée</span>';
+                const rendBadge = c.is_rendezvous
+                    ? '<span class="badge rend">rendez-vous</span>'
+                    : '';
+                const streamsHtml = (c.streams && c.streams.length)
+                    ? `<div class="streams">↳ ${c.streams.length} flux actif(s) : ${c.streams.map(s => `${s.target || '?'} (${s.status})`).join(', ')}</div>`
+                    : '';
+                return `
+                <div class="circuit ${c.active ? 'active' : ''}">
+                    <span class="purpose">ID: ${c.id} | Statut: ${c.status} | Rôle: ${c.purpose} ${usedBadge}${rendBadge}</span>
                     <div>${c.path.map((hop, index) => `<span class="hop">${index + 1}. ${hop || 'Unknown'}</span>`).join(' ➔ ')}</div>
-                </div>
-            `).join('');
+                    ${streamsHtml}
+                </div>`;
+            }).join('');
+        }
+
+        function formatFullRoutes(routes) {
+            if (!routes || routes.length === 0) {
+                return "<p>Aucun trajet vers le service caché pour l'instant. Cliquez sur « Tester la connexion onion ».</p>";
+            }
+            return routes.map(r => {
+                const nodes = r.combined_path.map((node, i) => {
+                    const isFirst = i === 0;
+                    const isLast = i === r.combined_path.length - 1;
+                    const isRdv = node === r.rendezvous;
+                    let cls = 'relay';
+                    if (isFirst || isLast) cls = 'endpoint';
+                    else if (isRdv) cls = 'rdv';
+                    const label = isRdv ? `${node} (rendez-vous)` : node;
+                    return `<span class="node ${cls}">${label}</span>`;
+                }).join('<span class="arrow"> ➔ </span>');
+
+                const stateLabel = r.complete
+                    ? 'Trajet complet reconstitué'
+                    : 'Moitié service introuvable (trajet partiel)';
+                const meta = `Circuit client #${r.client_id}` +
+                    (r.service_id ? ` ↔ circuit service #${r.service_id}` : '') +
+                    ` — point de rendez-vous : ${r.rendezvous}`;
+
+                return `
+                <div class="full-route ${r.complete ? '' : 'incomplete'}">
+                    <strong>${stateLabel}</strong>
+                    <div class="route-line">${nodes}</div>
+                    <div class="route-meta">${meta}</div>
+                </div>`;
+            }).join('');
+        }
+
+        async function fetchFullRoutes() {
+            try {
+                const response = await fetch('/api/full-routes');
+                const data = await response.json();
+                document.getElementById('full-routes').innerHTML = formatFullRoutes(data.routes);
+            } catch (err) {
+                document.getElementById('full-routes').innerHTML =
+                    '<p style="color:#ef4444;">Erreur lors du chargement des trajets complets</p>';
+            }
+        }
+
+        async function fetchOnion() {
+            try {
+                const response = await fetch('/api/onion');
+                const data = await response.json();
+                const el = document.getElementById('onion-url');
+                if (data.onion) {
+                    el.textContent = data.onion;
+                } else {
+                    el.textContent = data.error || "Adresse .onion indisponible";
+                }
+            } catch (err) {
+                document.getElementById('onion-url').textContent = "Erreur de chargement de l'adresse onion";
+            }
         }
 
         async function fetchCircuits() {
             document.getElementById('client-circuits').innerHTML = "Chargement...";
             document.getElementById('onion-circuits').innerHTML = "Chargement...";
-            
+
             try {
                 const response = await fetch('/api/circuits');
                 const data = await response.json();
-                
+
                 document.getElementById('client-circuits').innerHTML = formatCircuits(data.client);
                 document.getElementById('onion-circuits').innerHTML = formatCircuits(data.onion);
             } catch (err) {
                 alert("Erreur de connexion à l'API Flask !");
             }
+            // On reconstitue aussi les trajets complets a chaque rafraichissement.
+            fetchFullRoutes();
         }
+
+        async function testOnion() {
+            const result = document.getElementById('test-result');
+            result.style.color = '#94a3b8';
+            result.textContent = "Envoi d'une requête réelle vers le service .onion...";
+            try {
+                const response = await fetch('/api/test-onion');
+                const data = await response.json();
+                if (data.ok) {
+                    result.style.color = '#22c55e';
+                    result.textContent = `Réponse reçue de ${data.url} (HTTP ${data.status_code}, ${data.length} octets). Les routes utilisées sont surlignées ci-dessous.`;
+                } else {
+                    result.style.color = '#ef4444';
+                    result.textContent = `Échec : ${data.error}`;
+                }
+            } catch (err) {
+                result.style.color = '#ef4444';
+                result.textContent = "Erreur lors de l'appel à /api/test-onion";
+            }
+            // On rafraichit les circuits pour voir la route qui vient d'etre utilisee.
+            fetchCircuits();
+        }
+
+        // Chargement initial de l'adresse onion et des circuits.
+        fetchOnion();
+        fetchCircuits();
     </script>
 </body>
 </html>
