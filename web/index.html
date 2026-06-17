@@ -1,26 +1,379 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Demo Tor Onion</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 2rem;
-        max-width: 780px;
-      }
-      code {
-        background: #f3f3f3;
-        padding: 0.1rem 0.35rem;
-      }
-    </style>
+    <title>Tor à l'Henallux - Proposition de Serveur Relais</title>
+    <meta
+      name="description"
+      content="Analyse technique, légale, éthique et pédagogique pour l'implantation d'un relais Tor par l'Henallux."
+    />
+    <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
-    <h1>Service Onion disponible</h1>
-    <p>Cette page est servie via un service cache Tor (.onion).</p>
-    <p>
-      Environnement: <code>docker-compose</code> avec relais de demo + client Tor.
-    </p>
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <header class="top-header">
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 32 32">
+          <path
+            d="M16,2C8.28,2,2,8.28,2,16s6.28,14,14,14s14-6.28,14-14S23.72,2,16,2z M16,26c-5.52,0-10-4.48-10-10S10.48,6,16,6 s10,4.48,10,10S21.52,26,16,26z M16,10c-3.31,0-6,2.69-6,6s2.69,6,6,6s6-2.69,6-6S19.31,10,16,10z M16,14c-1.1,0-2,0.9-2,2 s0.9,2,2,2s2-0.9,2-2S17.1,14,16,14z"
+          />
+        </svg>
+        <span class="logo-text">Projet Tor - Henallux</span>
+      </div>
+    </header>
+
+    <nav class="dots-navigation" aria-label="Menu des slides">
+      <button class="dot-btn active" data-slide="0" aria-label="Introduction">
+        <span class="tooltip">Introduction</span>
+      </button>
+      <button class="dot-btn" data-slide="1" aria-label="Challenge">
+        <span class="tooltip">Le Tor University Challenge</span>
+      </button>
+      <button class="dot-btn" data-slide="2" aria-label="UNamur">
+        <span class="tooltip">Le relais Tor de l'Université de Namur</span>
+      </button>
+      <button class="dot-btn" data-slide="3" aria-label="Légal">
+        <span class="tooltip">Aspect Légal</span>
+      </button>
+      <button class="dot-btn" data-slide="4" aria-label="Éthique">
+        <span class="tooltip">Aspect Éthique</span>
+      </button>
+      <button class="dot-btn" data-slide="5" aria-label="Pédagogique">
+        <span class="tooltip">Aspect Pédagogique</span>
+      </button>
+      <button class="dot-btn" data-slide="6" aria-label="Technique">
+        <span class="tooltip">Aspect Technique</span>
+      </button>
+      <button class="dot-btn" data-slide="7" aria-label="Avantages">
+        <span class="tooltip">Avantages / Inconvénients</span>
+      </button>
+      <button class="dot-btn" data-slide="8" aria-label="Conclusion">
+        <span class="tooltip">Conclusion</span>
+      </button>
+    </nav>
+
+    <div class="navigation-arrows">
+      <button class="nav-arrow-btn" id="prevBtn" aria-label="Slide précédente">
+        ←
+      </button>
+      <button class="nav-arrow-btn" id="nextBtn" aria-label="Slide suivante">
+        →
+      </button>
+    </div>
+
+    <main class="slides-container" id="slidesContainer">
+      <!-- Slide 1: Introduction -->
+      <section class="slide active" id="slide-intro">
+        <div class="slide-content title-container">
+          <h1 class="slide-title-main">
+            Serait-il pertinent, pour une Haute-Ecole telle que l’Henallux,
+            <span class="accent-text">de sponsoriser un serveur Tor ?</span>
+          </h1>
+          <p class="slide-subtitle">
+            Projet Réseau | Cabaraux Guillaume - Cheramy Louis - Goossens Malo
+          </p>
+        </div>
+      </section>
+
+      <!-- Slide 2: Challenge -->
+      <section class="slide" id="slide-challenge">
+        <div class="slide-content">
+          <h2 class="slide-title">
+            Le Tor <span class="accent-text"> University Challenge</span>
+          </h2>
+          <div class="slide-layout">
+            <div class="slide-text">
+              <p>
+                Une initiative de l'<strong
+                  >EFF (Electronic Frontier Foundation)</strong
+                >
+                pour encourager les universités à soutenir la liberté
+                d'expression en ligne :
+              </p>
+              <ul>
+                <li>
+                  <strong>Participation globale :</strong> Plus de 45
+                  universités et institutions y participent déjà (dont
+                  l'UNamur).
+                </li>
+                <li>
+                  <strong>Hôtes idéaux :</strong> Les écoles disposent du haut
+                  débit, d'adresses IP libres et de compétences techniques.
+                </li>
+                <li>
+                  <strong>Opportunité pour l'Henallux :</strong> Contribuer aux
+                  libertés numériques mondiales au sein d'un réseau académique
+                  engagé.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 3: UNamur -->
+      <section class="slide" id="slide-unamur">
+        <div class="slide-content">
+          <h2 class="slide-title">
+            Le relai Tor de
+            <span class="accent-text">L'Université de Namur</span>
+          </h2>
+          <div class="slide-layout">
+            <div style="flex: 0.7; max-width: 250px">
+              <img
+                src="unamur.png"
+                alt="Université de Namur Logo"
+                style="
+                  width: 100%;
+                  border-radius: 8px;
+                  border: 1px solid var(--border-color);
+                "
+              />
+            </div>
+            <div class="slide-text">
+              <p>
+                Projet concret mené par <strong>Florentin Rochet</strong> et
+                <strong>Jules Dejaeghere</strong> de la Faculté d'Informatique :
+              </p>
+              <ul>
+                <li>
+                  <strong>UNamurCS01 (Juillet 2024) :</strong> Passage public
+                  rapide (<strong>40 MB/s</strong>) pour relayer la connexion
+                  des utilisateurs de Tor.
+                </li>
+                <li>
+                  <strong>UNamurCS02 (Avril 2026) :</strong> Entrée "secrète"
+                  (<strong>2,99 MB/s</strong>) pour aider à contourner les
+                  blocages dans les pays censurés.
+                </li>
+                <li>
+                  <strong>Double objectif :</strong> Apporter une aide citoyenne
+                  et former les étudiants en sécurité sur de vrais serveurs
+                  opérationnels.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 4: Aspect Légal -->
+      <section class="slide" id="slide-legal">
+        <div class="slide-content">
+          <h2 class="slide-title">
+            Aspect <span class="accent-text">Légal</span>
+          </h2>
+          <div class="slide-layout">
+            <div class="slide-text">
+              <ul>
+                <li>
+                  <strong>Nœud de sortie (À éviter) :</strong> Risque légal et
+                  administratif élevé. L'IP de l'école serait visible lors
+                  d'éventuels abus ou activités illégales.
+                </li>
+                <li>
+                  <strong>Relais intermédiaire (Recommandé) :</strong> Risque
+                  juridique nul. L'école sert uniquement d'aiguillage chiffré
+                  sans rien pouvoir déchiffrer.
+                </li>
+                <li>
+                  <strong>Responsabilité légale :</strong> La responsabilité
+                  civile ou pénale de l'école ne peut pas être engagée pour le
+                  trafic qui y transite.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 5: Aspect Éthique -->
+      <section class="slide" id="slide-ethical">
+        <div class="slide-content">
+          <h2 class="slide-title">
+            Aspect <span class="accent-text">Éthique</span>
+          </h2>
+          <div class="slide-layout">
+            <div class="slide-text">
+              <ul>
+                <li>
+                  <strong>Liberté d'expression :</strong> Soutenir activement
+                  l'accès libre à l'information (journalistes, lanceurs
+                  d'alerte, citoyens censurés).
+                </li>
+                <li>
+                  <strong>Rôle académique :</strong> Un engagement fort pour une
+                  Haute-École, à l'image d'institutions comme le MIT ou
+                  l'UNamur.
+                </li>
+                <li>
+                  <strong>Utilité publique :</strong> Contribuer à la robustesse
+                  et à l'indépendance d'un réseau internet mondial solidaire.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 6: Aspect Pédagogique -->
+      <section class="slide" id="slide-pedagogical">
+        <div class="slide-content">
+          <h2 class="slide-title">
+            Aspect <span class="accent-text">Pédagogique</span>
+          </h2>
+          <div class="slide-layout">
+            <div class="slide-text">
+              <ul>
+                <li>
+                  <strong>Travaux pratiques réels :</strong> Sortir des
+                  simulations pour configurer et sécuriser un vrai serveur Linux
+                  connecté à Internet.
+                </li>
+                <li>
+                  <strong>Compétences réseau :</strong> Apprendre la gestion de
+                  la bande passante, l'isolation réseau et la cybersécurité
+                  appliquée.
+                </li>
+                <li>
+                  <strong>Responsabilisation :</strong> Sensibiliser les
+                  étudiants à la gestion de services critiques et aux enjeux de
+                  protection de la vie privée.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 7: Aspect Technique -->
+      <section class="slide" id="slide-tech">
+        <div class="slide-content">
+          <h2 class="slide-title">
+            Aspect
+            <span class="accent-text">Technique</span>
+          </h2>
+          <div class="slide-layout">
+            <div class="slide-text">
+              <p>
+                Prérequis simples pour installer un
+                <strong>relais intermédiaire</strong> :
+              </p>
+              <ul>
+                <li>
+                  <strong>Machine (Serveur / VM) :</strong> Serveur Linux
+                  (Debian ou Ubuntu) à maintenir à jour.
+                </li>
+                <li>
+                  <strong>Bande passante :</strong> Connexion stable, idéalement
+                  de <strong>100+ Mbps</strong>.
+                </li>
+                <li>
+                  <strong>Processeur (CPU) :</strong> Puissance correcte sur un
+                  seul cœur (Tor n'utilise qu'un seul thread par instance).
+                </li>
+                <li>
+                  <strong>Adresse IP dédiée :</strong> IP publique dédiée pour
+                  éviter tout blocage éventuel sur le réseau principal de
+                  l'école.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 8: Avantages / Inconvénients -->
+      <section class="slide" id="slide-comparison">
+        <div class="slide-content">
+          <h2 class="slide-title">
+            Avantages et
+            <span class="accent-text">Inconvénients</span>
+          </h2>
+          <div class="pros-cons-grid">
+            <div class="pc-card pros">
+              <h3>Avantages</h3>
+              <ul class="pc-list">
+                <li>
+                  <strong>Risque légal nul :</strong> Le relais ne fait que
+                  transmettre du trafic chiffré sans s'exposer directement.
+                </li>
+                <li>
+                  <strong>Apprentissage étudiant :</strong> TP concret de
+                  réseau, sécurité et administration Linux.
+                </li>
+                <li>
+                  <strong>Engagement solidaire :</strong> Aide active aux
+                  internautes censurés dans le monde.
+                </li>
+                <li>
+                  <strong>Maintenance minime :</strong> Le système fonctionne de
+                  manière autonome une fois installé.
+                </li>
+              </ul>
+            </div>
+
+            <div class="pc-card cons">
+              <h3>Inconvénients</h3>
+              <ul class="pc-list">
+                <li>
+                  <strong>Bande passante :</strong> Besoin d'une connexion
+                  internet stable (100+ Mbps).
+                </li>
+                <li>
+                  <strong>IP publique dédiée :</strong> Nécessaire pour
+                  préserver le réseau principal de l'école de tout blocage.
+                </li>
+                <li>
+                  <strong>Suivi technique :</strong> Surveillance et mises à
+                  jour de sécurité de temps en temps.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 9: Conclusion -->
+      <section class="slide" id="slide-conclusion">
+        <div class="slide-content">
+          <h2 class="slide-title">
+            Réponse à la <span class="accent-text">question de recherche</span>
+          </h2>
+          <div class="slide-layout">
+            <div class="slide-text">
+              <p>
+                <strong
+                  >Serait-il pertinent pour une Haute-Ecole telle que l’Henallux
+                  de sponsoriser un serveur Tor ?</strong
+                >
+              </p>
+              <ul>
+                <li>
+                  <strong>La réponse est oui :</strong> C'est un projet à fort
+                  impact pédagogique et solidaire.
+                </li>
+                <li>
+                  <strong>Condition stricte :</strong> Choisir uniquement un
+                  <strong>relais intermédiaire (Middle Relay)</strong> et
+                  refuser le nœud de sortie.
+                </li>
+                <li>
+                  <strong>Bilan :</strong> Projet formateur en informatique,
+                  engagement sociétal fort et risque juridique nul.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
   </body>
 </html>
